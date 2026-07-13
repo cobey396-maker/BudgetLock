@@ -1,0 +1,13 @@
+{
+  "name": "BudgetLock",
+  "short_name": "BudgetLock",
+  "description": "Set a monthly limit. Watch the needle. Stay out of the red.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#131318",
+  "theme_color": "#17171C",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -1,0 +1,228 @@
+:root {
+  --bg: #17171c;
+  --bg-deep: #131318;
+  --surface: #1e1e24;
+  --surface-2: #26262e;
+  --text: #f2f2f5;
+  --mint: #3ddc97;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Thin scrollbars with no white track (WebKit + Firefox) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-deep);
+  color: var(--text);
+  font-family: -apple-system, "SF Pro Text", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+input {
+  outline: none;
+}
+input::placeholder {
+  color: #8b8b96;
+}
+/* Hide number-input spinners (typed $ inputs on the split/limits screens) */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+button {
+  font-family: inherit;
+}
+
+a {
+  color: #3ddc97;
+  text-decoration: none;
+}
+
+/* App font */
+.font-grotesk {
+  font-family: "Space Grotesk", -apple-system, system-ui, sans-serif;
+}
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Press states (mirrors the prototype's style-active/style-hover) */
+.press:active {
+  transform: scale(0.98);
+}
+.press-key:active {
+  transform: scale(0.96);
+  background: #33333d !important;
+}
+.press-chip:active {
+  transform: scale(0.96);
+}
+.press-sm:active {
+  transform: scale(0.94);
+}
+.txn-row {
+  transition: transform 160ms ease, background 160ms ease;
+}
+.txn-row:hover {
+  transform: scale(1.02);
+  background: rgba(255, 255, 255, 0.04);
+}
+.del-btn:hover {
+  color: #ff6b6b !important;
+  background: rgba(255, 107, 107, 0.1) !important;
+}
+.settings-row:active {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Keyframes (verbatim from the prototype) */
+@keyframes bl-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+@keyframes bl-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes bl-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes bl-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes bl-screen {
+  from { opacity: 0; transform: translateY(14px) scale(0.99); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes bl-sheet {
+  from { opacity: 0; transform: translateY(56px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes bl-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+@keyframes bl-shimmer {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(320%); }
+}
+@keyframes bl-rev {
+  0% { transform: rotate(-56deg); }
+  55% { transform: rotate(9deg); }
+  78% { transform: rotate(-3deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* Range slider — mint accent, larger hit target (README §5) */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  accent-color: #3ddc97;
+  height: 24px;
+  background: transparent;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 5px;
+  border-radius: 3px;
+  background: linear-gradient(
+    to right,
+    #3ddc97 var(--fill, 0%),
+    #33333d var(--fill, 0%)
+  );
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  margin-top: -7.5px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+}
+input[type="range"]::-moz-range-progress {
+  height: 5px;
+  border-radius: 3px;
+  background: #3ddc97;
+}
+
+/* The device shell: full-bleed on phones, framed on large screens */
+.device-stage {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  background: var(--bg-deep);
+}
+.device {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  overflow: hidden;
+  isolation: isolate;
+}
+@media (min-width: 480px) {
+  .device-stage {
+    align-items: center;
+    padding: 32px 20px;
+    background: radial-gradient(ellipse at 50% 0%, #1c1c23 0%, #131318 60%);
+  }
+  .device {
+    /* Fixed phone aspect ratio (2:1). Width is the driver — capped at a
+       comfortable 400px, by the viewport width, and by whatever width keeps
+       the derived height inside the window. Height follows, so it never
+       squishes either way and always fits without clipping. */
+    aspect-ratio: 1 / 2;
+    width: min(400px, calc(100vw - 40px), calc((100dvh - 40px) / 2));
+    height: auto;
+    border-radius: 48px;
+    border: 11px solid #0c0c10;
+    box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55);
+  }
+}

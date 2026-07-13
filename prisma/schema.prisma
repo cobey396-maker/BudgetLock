@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // Postgres for production (Vercel). These two env var names are injected
+  // automatically when you attach a Vercel Postgres store; set them yourself
+  // for any other Postgres (Neon/Supabase). `url` is the pooled runtime
+  // connection; `directUrl` is the non-pooled connection used for schema push.
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  sessions     Session[]
+  profile      Profile?
+  budget       Budget?
+  items        PlaidItem[]
+  transactions Transaction[]
+}
+
+model Session {
+  token     String   @id
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([userId])
+}
+
+// Questionnaire answers ("Getting to know you") + server-computed suggested limit.
+model Profile {
+  userId         String  @id
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wage           Float   @default(0)
+  savingsGoal    Float   @default(0)
+  savingsMonths  Int     @default(12)
+  expenses       Float   @default(0)
+  goals          String  @default("[]") // JSON array
+  age            Int     @default(0)
+  assets         String  @default("[]") // JSON array
+  profileDone    Boolean @default(false)
+  profileStep    Int     @default(0)
+  suggestedLimit Float   @default(0)
+  updatedAt      DateTime @updatedAt
+}
+
+// Budget config: the "lock" limit, period, and per-category splits.
+model Budget {
+  userId         String  @id
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  setup          Boolean @default(false)
+  onboardStep    Int     @default(0)
+  monthlyLimit   Float   @default(2000)
+  period         String  @default("monthly") // 'monthly' | 'weekly'
+  categoryLimits String  @default("{}")      // JSON { catId: amount }
+  updatedAt      DateTime @updatedAt
+}
+
+// A linked Plaid Item (one per connected bank login). Holds the sync cursor.
+model PlaidItem {
+  id          String  @id @default(cuid())
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemId      String
+  accessToken String
+  bankName    String
+  cursor      String? // /transactions/sync cursor
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+// Plaid Transaction shape (subset) + our budget_category mapping.
+model Transaction {
+  id              String  @id @default(cuid())
+  transactionId   String  // source/Plaid id — unique per user, not globally
+  userId          String
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId       String
+  amount          Float   // positive = money out (Plaid convention)
+  isoCurrencyCode String  @default("USD")
+  date            String  // YYYY-MM-DD
+  name            String
+  merchantName    String?
+  pending         Boolean @default(false)
+  paymentChannel  String  @default("other")
+  pfcPrimary      String?
+  pfcDetailed     String?
+  budgetCategory  String? // manual override / mapped category id
+  source          String  @default("manual") // seed | plaid | manual | csv
+  createdAt       DateTime @default(now())
+
+  @@unique([userId, transactionId])
+  @@index([userId, date])
+}
