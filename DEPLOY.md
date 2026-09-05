@@ -50,9 +50,11 @@ Project → **Settings → Environment Variables** → add for Production + Prev
 | `PLAID_SECRET` | no | the secret matching `PLAID_ENV` |
 | `PLAID_ENV` | no | `sandbox` (default) or `production` |
 
-Missing or malformed values make the server **refuse to start in production**,
-with the offending variable named in the deploy logs. That's deliberate: a
-half-configured finance app is worse than one that is plainly down.
+Configuration problems are reported at boot in the deploy logs and by
+`/api/health`, which lists them under `warnings` (the app keeps serving) or
+`blocking` (it does not). Only a missing `POSTGRES_PRISMA_URL` is blocking —
+nothing works without a database. A half-set Plaid pair or an absent
+`AUTH_SECRET` degrades the affected feature and leaves the rest of the app up.
 
 > Rotating `AUTH_SECRET` signs every user out and invalidates stored Plaid access
 > tokens (users must re-link their bank). Don't rotate it casually.
