@@ -62,7 +62,9 @@ export function periodTxns(txns: StoredTxn[], period: string, now = new Date()):
     const iso = weekStartIso(now);
     return txns.filter((t) => t.date >= iso && t.amount > 0);
   }
-  const ym = now.toISOString().slice(0, 7);
+  // Local month, not UTC: transaction dates are local calendar days, so
+  // `toISOString()` would push evening spend west of UTC into the next month.
+  const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   return txns.filter((t) => t.date.startsWith(ym) && t.amount > 0);
 }
 

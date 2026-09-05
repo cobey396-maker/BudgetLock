@@ -73,7 +73,7 @@ a {
 
 /* App font */
 .font-grotesk {
-  font-family: "Space Grotesk", -apple-system, system-ui, sans-serif;
+  font-family: var(--font-grotesk), "Space Grotesk", -apple-system, system-ui, sans-serif;
 }
 .tnum {
   font-variant-numeric: tabular-nums;
@@ -225,4 +225,79 @@ input[type="range"]::-moz-range-progress {
     border: 11px solid #0c0c10;
     box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55);
   }
+}
+
+/* ── Legal pages (privacy, terms) ───────────────────────────────────────── */
+.legal {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 22px 72px;
+  color: var(--text);
+  font-size: 15.5px;
+  line-height: 1.65;
+}
+.legal-back {
+  display: inline-block;
+  margin-bottom: 26px;
+  color: var(--mint);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.legal-back:hover {
+  text-decoration: underline;
+}
+.legal h1 {
+  font-family: var(--font-grotesk), -apple-system, system-ui, sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin: 0;
+}
+.legal h2 {
+  font-family: var(--font-grotesk), -apple-system, system-ui, sans-serif;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  margin: 34px 0 10px;
+}
+.legal-updated {
+  color: #8b8b96;
+  font-size: 13.5px;
+  margin: 6px 0 28px;
+}
+.legal p,
+.legal li {
+  color: #c9c9d1;
+}
+.legal ul {
+  padding-left: 20px;
+}
+.legal li {
+  margin-bottom: 8px;
+}
+.legal a {
+  color: var(--mint);
+}
+.legal strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.legal-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 48px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 14px;
+  color: #55555f;
+}
+.legal-footer a {
+  color: #8b8b96;
+  text-decoration: none;
+}
+.legal-footer a:hover {
+  color: var(--mint);
 }

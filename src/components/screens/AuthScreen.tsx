@@ -1,11 +1,14 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import type { AppState } from "@/lib/types";
 import { api } from "@/lib/client";
 import { C } from "@/lib/tokens";
 import { CTA, Field, LogoMark } from "../ui/primitives";
 
 const emailRe = /^\S+@\S+\.\S+$/;
+const MIN_PASSWORD = 8; // must match MIN_PASSWORD_LENGTH in lib/auth.ts
+const legalLink: React.CSSProperties = { color: C.textMuted, textDecoration: "underline" };
 const screenStyle: React.CSSProperties = {
   flex: 1,
   display: "flex",
@@ -24,7 +27,7 @@ export default function AuthScreen({ onAuthed }: { onAuthed: (s: AppState) => vo
   const [busy, setBusy] = useState(false);
 
   const emailInvalid = !!email && !emailRe.test(email.trim());
-  const signupValid = name.trim().length > 0 && emailRe.test(email.trim()) && pass.length >= 6;
+  const signupValid = name.trim().length > 0 && emailRe.test(email.trim()) && pass.length >= MIN_PASSWORD;
   const loginValid = emailRe.test(email.trim()) && pass.length > 0;
   const valid = mode === "signup" ? signupValid : loginValid;
 
@@ -74,7 +77,7 @@ export default function AuthScreen({ onAuthed }: { onAuthed: (s: AppState) => vo
         />
         <Field
           type="password"
-          placeholder={isSignup ? "Password (6+ characters)" : "Password"}
+          placeholder={isSignup ? `Password (${MIN_PASSWORD}+ characters)` : "Password"}
           value={pass}
           onChange={(e) => setPass(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
@@ -119,6 +122,18 @@ export default function AuthScreen({ onAuthed }: { onAuthed: (s: AppState) => vo
       <CTA onClick={submit} disabled={!valid || busy} style={{ marginTop: 8 }}>
         {busy ? "Please wait…" : isSignup ? "Create account" : "Log in"}
       </CTA>
+
+      <div style={{ fontSize: 11.5, color: C.textFaint, textAlign: "center", lineHeight: 1.6, padding: "12px 6px 0" }}>
+        {isSignup ? "By creating an account you agree to our " : "Read our "}
+        <Link href="/terms" style={legalLink}>
+          Terms
+        </Link>{" "}
+        and{" "}
+        <Link href="/privacy" style={legalLink}>
+          Privacy Policy
+        </Link>
+        .
+      </div>
     </div>
   );
 }

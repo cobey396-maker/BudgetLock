@@ -13,5 +13,5 @@ export async function POST() {
       for (const item of items) imported += await syncPlaidItem(userId, item.id);
     }
     return ok({ ...(await buildState(userId)), imported });
-  });
+  }, "plaid");
 }

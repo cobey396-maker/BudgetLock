@@ -17,5 +17,5 @@ export async function POST() {
       language: "en",
     });
     return ok({ link_token: resp.data.link_token, mock: false });
-  });
+  }, "plaid");
 }

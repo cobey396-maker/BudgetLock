@@ -1,20 +1,19 @@
 import { Configuration, PlaidApi, PlaidEnvironments } from "plaid";
+import { env } from "./env";
 
 // Whether real Plaid sandbox credentials are configured. When absent we fall
 // back to a built-in mock that returns the same Plaid Transaction shape, so the
 // full Link -> /transactions/sync flow works end-to-end without creds.
-export const plaidConfigured = Boolean(
-  process.env.PLAID_CLIENT_ID && process.env.PLAID_SECRET
-);
+export const plaidConfigured = Boolean(env.plaidClientId && env.plaidSecret);
 
 export const plaidClient = plaidConfigured
   ? new PlaidApi(
       new Configuration({
-        basePath: PlaidEnvironments[process.env.PLAID_ENV || "sandbox"],
+        basePath: PlaidEnvironments[env.plaidEnv],
         baseOptions: {
           headers: {
-            "PLAID-CLIENT-ID": process.env.PLAID_CLIENT_ID,
-            "PLAID-SECRET": process.env.PLAID_SECRET,
+            "PLAID-CLIENT-ID": env.plaidClientId,
+            "PLAID-SECRET": env.plaidSecret,
           },
         },
       })

@@ -1,6 +1,7 @@
 import { prisma } from "./db";
 import { plaidClient } from "./plaid";
 import type { PlaidTxn } from "./plaid";
+import { decryptSecret } from "./crypto";
 
 // Upsert a batch of Plaid-shaped transactions for a user; returns # newly added.
 async function upsertPlaidTxns(userId: string, txns: PlaidTxn[]) {
@@ -37,13 +38,15 @@ export async function syncPlaidItem(userId: string, itemId: string): Promise<num
   const item = await prisma.plaidItem.findUnique({ where: { id: itemId } });
   if (!item || !plaidClient) return 0;
 
+  const accessToken = decryptSecret(item.accessToken);
+
   let cursor = item.cursor || undefined;
   let added: PlaidTxn[] = [];
   let hasMore = true;
 
   while (hasMore) {
     const resp = await plaidClient.transactionsSync({
-      access_token: item.accessToken,
+      access_token: accessToken,
       cursor,
     });
     const data = resp.data;
