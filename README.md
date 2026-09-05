@@ -72,8 +72,11 @@ See **[DEPLOY.md](DEPLOY.md)** for the Vercel walkthrough and
 | `NEXT_PUBLIC_GOVERNING_LAW` | no | jurisdiction named in the terms |
 | `NEXT_PUBLIC_LEGAL_UPDATED` | no | "last updated" date on the legal pages |
 
-Configuration is validated at server start (`src/instrumentation.ts`); a missing
-or malformed value is fatal in production and a warning in development.
+Configuration is validated at server start (`src/instrumentation.ts`). Only a
+missing `POSTGRES_PRISMA_URL` stops the server — without it no request can be
+served anyway. Every other problem is logged as a warning and reported by
+`/api/health` while the app keeps serving, so a half-configured optional
+integration can never cause an outage.
 
 ## Architecture
 
