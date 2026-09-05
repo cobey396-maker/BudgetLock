@@ -1,4 +1,6 @@
 "use client";
+import { useState } from "react";
+import Link from "next/link";
 import type { AppState } from "@/lib/types";
 import { useCtx } from "../ctx";
 import { api } from "@/lib/client";
@@ -6,6 +8,10 @@ import { C } from "@/lib/tokens";
 
 export default function Settings({ openPlaid, openCsv }: { openPlaid: () => void; openCsv: () => void }) {
   const { state, setState, setScreen, setEntry } = useCtx();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+  const [deleting, setDeleting] = useState(false);
   const acc = state.account!;
   const weekly = state.budget.period === "weekly";
 
@@ -25,11 +31,23 @@ export default function Settings({ openPlaid, openCsv }: { openPlaid: () => void
     setScreen("dashboard");
     setState(st);
   }
-  async function resetDemo() {
+  async function resetData() {
     const st = (await api.resetDemo()) as AppState;
     setEntry("");
     setScreen("dashboard");
     setState(st);
+  }
+  async function deleteAccount() {
+    if (deleting) return;
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      await api.deleteAccount(deletePassword);
+      setState(null);
+    } catch (e) {
+      setDeleteError((e as Error).message);
+      setDeleting(false);
+    }
   }
 
   const Row = ({ icon, title, sub, right, onClick, border = true }: { icon: React.ReactNode; title: string; sub?: string; right?: React.ReactNode; onClick?: () => void; border?: boolean }) => (
@@ -88,7 +106,51 @@ export default function Settings({ openPlaid, openCsv }: { openPlaid: () => void
         <Row icon={<path d="M3 12a9 9 0 1 0 3-6.7 M3 3v5h5" />} title="Restart onboarding" onClick={restartOnboarding} border={false} />
       </div>
 
-      <button onClick={resetDemo} className="press" style={{ height: 48, borderRadius: 14, border: "1px solid rgba(255,107,107,0.35)", background: "transparent", color: C.coral, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>Reset demo data</button>
+      <button onClick={resetData} className="press" style={{ height: 48, borderRadius: 14, border: "1px solid rgba(255,255,255,0.14)", background: "transparent", color: C.textMuted2, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>Reset my data</button>
+
+      {/* Permanent deletion — the privacy policy promises this, so it lives in the app. */}
+      {confirmingDelete ? (
+        <div style={{ background: C.surface2, borderRadius: 18, padding: 16, display: "flex", flexDirection: "column", gap: 10, border: "1px solid rgba(255,107,107,0.35)" }}>
+          <div style={{ fontSize: 15, fontWeight: 600 }}>Delete your account?</div>
+          <div style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.5 }}>
+            This permanently removes your budget, transactions and bank connections. It can&apos;t be undone.
+          </div>
+          <input
+            type="password"
+            value={deletePassword}
+            onChange={(e) => setDeletePassword(e.target.value)}
+            placeholder="Confirm your password"
+            autoComplete="current-password"
+            style={{ height: 46, borderRadius: 12, border: "1px solid rgba(255,255,255,0.12)", background: C.surface, color: C.text, padding: "0 14px", fontSize: 15, fontFamily: "inherit" }}
+          />
+          {deleteError && <div style={{ fontSize: 12.5, color: C.coral }}>{deleteError}</div>}
+          <div style={{ display: "flex", gap: 10 }}>
+            <button
+              onClick={() => { setConfirmingDelete(false); setDeletePassword(""); setDeleteError(""); }}
+              className="press"
+              style={{ flex: 1, height: 46, borderRadius: 12, border: "1px solid rgba(255,255,255,0.14)", background: "transparent", color: C.textMuted2, fontSize: 14.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={deleteAccount}
+              disabled={!deletePassword || deleting}
+              className="press"
+              style={{ flex: 1, height: 46, borderRadius: 12, border: "none", background: C.coral, color: "#2A0F0F", fontSize: 14.5, fontWeight: 700, cursor: deletePassword && !deleting ? "pointer" : "not-allowed", opacity: deletePassword && !deleting ? 1 : 0.5, fontFamily: "inherit" }}
+            >
+              {deleting ? "Deleting…" : "Delete forever"}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button onClick={() => setConfirmingDelete(true)} className="press" style={{ height: 48, borderRadius: 14, border: "1px solid rgba(255,107,107,0.35)", background: "transparent", color: C.coral, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Delete account</button>
+      )}
+
+      <div style={{ display: "flex", justifyContent: "center", gap: 10, alignItems: "center", fontSize: 12.5, color: C.textFaint, padding: "10px 0 4px" }}>
+        <Link href="/privacy" style={{ color: C.textMuted, textDecoration: "none" }}>Privacy</Link>
+        <span aria-hidden="true">·</span>
+        <Link href="/terms" style={{ color: C.textMuted, textDecoration: "none" }}>Terms</Link>
+      </div>
     </div>
   );
 }

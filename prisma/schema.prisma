@@ -34,6 +34,7 @@ model Session {
   expiresAt DateTime
 
   @@index([userId])
+  @@index([expiresAt])
 }
 
 // Questionnaire answers ("Getting to know you") + server-computed suggested limit.
@@ -71,7 +72,7 @@ model PlaidItem {
   userId      String
   user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   itemId      String
-  accessToken String
+  accessToken String // AES-256-GCM ciphertext (see lib/crypto.ts)
   bankName    String
   cursor      String? // /transactions/sync cursor
   createdAt   DateTime @default(now())
@@ -101,4 +102,14 @@ model Transaction {
 
   @@unique([userId, transactionId])
   @@index([userId, date])
+}
+
+// Fixed-window rate-limit counters. Kept in the database (not process memory)
+// so the limit holds across serverless instances and cold starts.
+model RateLimit {
+  key       String   @id
+  count     Int      @default(0)
+  expiresAt DateTime
+
+  @@index([expiresAt])
 }

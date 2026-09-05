@@ -30,6 +30,8 @@ export const api = {
   connectBank: (bankName: string) =>
     call<AppState & { imported: number }>("/api/plaid/connect", "POST", { bankName }),
   resetDemo: () => call("/api/demo/reset", "POST"),
+  deleteAccount: (password: string) =>
+    call<{ ok: boolean }>("/api/account", "DELETE", { password }),
 };
 
 // Parse a CSV export (Cash App / Venmo / bank) into {date,name,amount} rows.
