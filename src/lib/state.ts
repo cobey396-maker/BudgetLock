@@ -1,6 +1,7 @@
 import { prisma } from "./db";
 import { aggregate, type StoredTxn } from "./budget";
 import { plaidConfigured } from "./plaid";
+import { mailConfigured } from "./mail";
 import type { AppState, ProfileState, BudgetState } from "./types";
 
 const DEFAULT_PROFILE: ProfileState = {
@@ -83,12 +84,13 @@ export async function buildState(userId: string): Promise<AppState> {
   const summary = aggregate(transactions, budget.monthlyLimit, budget.period, budget.categoryLimits);
 
   return {
-    account: { name: user.name, email: user.email },
+    account: { name: user.name, email: user.email, emailVerified: Boolean(user.emailVerifiedAt) },
     profile,
     budget,
     bank: { connected: Boolean(item), name: item?.bankName ?? "" },
     transactions,
     summary,
     plaidConfigured,
+    emailConfigured: mailConfigured,
   };
 }

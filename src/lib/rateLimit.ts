@@ -23,6 +23,14 @@ export const LIMITS = {
   loginIp: { limit: 40, windowSeconds: 15 * 60 },
   /** Stops scripted account farming from one address. */
   signup: { limit: 5, windowSeconds: 60 * 60 },
+  /**
+   * Reset and confirmation emails, per address. Tight: this endpoint sends mail
+   * to someone who did not necessarily ask for it, so it must not be usable to
+   * flood a mailbox.
+   */
+  forgot: { limit: 5, windowSeconds: 60 * 60 },
+  /** Per-address ceiling for the same endpoints, looser for shared IPs. */
+  forgotIp: { limit: 20, windowSeconds: 60 * 60 },
   /** Plaid link/exchange calls cost money and are slow. */
   plaid: { limit: 20, windowSeconds: 60 * 60 },
   /** Catch-all for authenticated writes. */

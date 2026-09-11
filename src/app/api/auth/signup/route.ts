@@ -2,6 +2,9 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { hashPassword, createSession, passwordProblem } from "@/lib/auth";
 import { buildState } from "@/lib/state";
+import { issueToken } from "@/lib/authTokens";
+import { sendMail, verifyEmail } from "@/lib/mail";
+import { env } from "@/lib/env";
 import { ok, err } from "@/lib/http";
 import { clientIp, enforce } from "@/lib/rateLimit";
 
@@ -49,5 +52,15 @@ export async function POST(req: Request) {
   }
 
   await createSession(user.id);
+
+  // Best effort: a mail outage must not stop someone creating an account. The
+  // app shows an unconfirmed banner with a resend action either way.
+  try {
+    const token = await issueToken(user.id, "email_verification");
+    await sendMail({ to: user.email, ...verifyEmail(`${env.appUrl}/verify?token=${encodeURIComponent(token)}`) });
+  } catch (e) {
+    console.error("[budgetlock] could not send the confirmation email", e);
+  }
+
   return ok(await buildState(user.id), { status: 201 });
 }

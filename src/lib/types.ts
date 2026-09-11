@@ -22,11 +22,13 @@ export type BudgetState = {
 };
 
 export type AppState = {
-  account: { name: string; email: string } | null;
+  account: { name: string; email: string; emailVerified: boolean } | null;
   profile: ProfileState;
   budget: BudgetState;
   bank: { connected: boolean; name: string };
   transactions: StoredTxn[];
   summary: Aggregate; // server-computed spend aggregation
   plaidConfigured: boolean;
+  /** False when outbound email is unconfigured — used to keep UI copy honest. */
+  emailConfigured: boolean;
 };

@@ -2,8 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AppState } from "@/lib/types";
 import { AppCtx, useCtx, type Ctx, type Screen } from "./ctx";
-import { C } from "@/lib/tokens";
-import { StatusBar, HomeIndicator, Glow } from "./ui/primitives";
+import DeviceShell from "./ui/DeviceShell";
 import AuthScreen from "./screens/AuthScreen";
 import Questionnaire from "./screens/Questionnaire";
 import Onboarding from "./screens/Onboarding";
@@ -111,49 +110,23 @@ export default function App({
       : "rgba(61,220,151,0.11)";
 
   return (
-    <div className="device-stage">
-      <div className="device" style={{ background: C.surface }}>
-        <StatusBar />
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            paddingTop: 58,
-            position: "relative",
-            isolation: "isolate",
-            overflow: "hidden",
-            color: C.text,
-          }}
-        >
-          <Glow color={glowColor} />
-          {!state ? (
-            <UnauthGate setState={setState} plaidConfigured={plaidConfigured} />
-          ) : (
-            <AppCtx.Provider value={ctx!}>
-              <Phase />
-            </AppCtx.Provider>
-          )}
-        </div>
-        <HomeIndicator />
-      </div>
-    </div>
+    <DeviceShell glowColor={glowColor}>
+      {!state ? (
+        <AuthScreen onAuthed={setState} />
+      ) : (
+        <AppCtx.Provider value={ctx!}>
+          <Phase />
+        </AppCtx.Provider>
+      )}
+    </DeviceShell>
   );
 }
 
-function UnauthGate({
-  setState,
-}: {
-  setState: (s: AppState) => void;
-  plaidConfigured: boolean;
-}) {
-  return <AuthScreen onAuthed={setState} />;
-}
 
 function Phase() {
   const { state } = useCtx();
   const { account, profile, budget } = state;
-  if (!account) return null; // handled by UnauthGate
+  if (!account) return null; // signed-out state is handled in App
   if (!profile.profileDone && !budget.setup) return <Questionnaire />;
   if (profile.profileDone && !budget.setup) return <Onboarding />;
   return <MainApp />;

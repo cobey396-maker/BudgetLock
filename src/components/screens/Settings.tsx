@@ -9,6 +9,7 @@ import { C } from "@/lib/tokens";
 export default function Settings({ openPlaid, openCsv }: { openPlaid: () => void; openCsv: () => void }) {
   const { state, setState, setScreen, setEntry } = useCtx();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [resend, setResend] = useState<"idle" | "sending" | "sent" | "unavailable">("idle");
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteError, setDeleteError] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -30,6 +31,16 @@ export default function Settings({ openPlaid, openCsv }: { openPlaid: () => void
     setEntry("");
     setScreen("dashboard");
     setState(st);
+  }
+  async function resendVerification() {
+    if (resend === "sending") return;
+    setResend("sending");
+    try {
+      const r = await api.resendVerification();
+      setResend(r.emailConfigured ? "sent" : "unavailable");
+    } catch {
+      setResend("unavailable");
+    }
   }
   async function resetData() {
     const st = (await api.resetDemo()) as AppState;
@@ -76,6 +87,37 @@ export default function Settings({ openPlaid, openCsv }: { openPlaid: () => void
         </div>
         <button onClick={signOut} className="press-chip" style={{ padding: "8px 14px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.12)", background: "transparent", color: C.textMuted2, fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>Sign out</button>
       </div>
+
+      {/* Unconfirmed email. Shown rather than enforced: locking someone out of
+          their own budget over an unread inbox helps nobody, but they do need
+          to know password recovery will not reach them. */}
+      {!acc.emailVerified && (
+        <div style={{ background: "rgba(232,179,75,0.10)", border: "1px solid rgba(232,179,75,0.35)", borderRadius: 18, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={C.amber} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z M22 6l-10 7L2 6" />
+            </svg>
+            <div style={{ fontSize: 14.5, fontWeight: 600, color: C.amber }}>Email not confirmed</div>
+          </div>
+          <div style={{ fontSize: 12.5, color: C.textMuted, lineHeight: 1.5 }}>
+            {resend === "sent"
+              ? "Sent. Check your inbox for the confirmation link."
+              : resend === "unavailable"
+                ? "Email isn't configured on this deployment, so nothing was sent."
+                : "Until you confirm it, we can't send you a password reset link if you get locked out."}
+          </div>
+          {resend !== "sent" && (
+            <button
+              onClick={resendVerification}
+              disabled={resend === "sending"}
+              className="press-chip"
+              style={{ alignSelf: "flex-start", marginTop: 2, padding: "8px 14px", borderRadius: 999, border: "1px solid rgba(232,179,75,0.45)", background: "transparent", color: C.amber, fontSize: 12.5, fontWeight: 600, cursor: resend === "sending" ? "default" : "pointer", fontFamily: "inherit" }}
+            >
+              {resend === "sending" ? "Sending…" : "Send confirmation email"}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* budget period */}
       <div style={{ background: C.surface2, borderRadius: 18, padding: "13px 16px", display: "flex", alignItems: "center", gap: 12 }}>

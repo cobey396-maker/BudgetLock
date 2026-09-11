@@ -29,6 +29,10 @@ What's already done, and what's still on you before BudgetLock is a public web a
 - [x] Unit tests for the aggregation, category mapping and CSV parser; CI running
       lint + typecheck + tests + build.
 - [x] Input caps on transaction amounts, notes, names and CSV row counts.
+- [x] **Password reset**: single-use links, 60-minute expiry, every session
+      destroyed on completion, no account enumeration, per-address send limits.
+- [x] **Email verification** on signup, with a resend action and a Settings
+      banner when unconfirmed. Completing a reset also confirms the address.
 
 ## Before you flip it public
 
@@ -36,6 +40,8 @@ What's already done, and what's still on you before BudgetLock is a public web a
 
 - [ ] Set `AUTH_SECRET` in Vercel (`openssl rand -hex 32`). Never reuse the
       development value.
+- [ ] Set `RESEND_API_KEY` and `MAIL_FROM` in Vercel, and send yourself a reset
+      email end to end. Until this is done nobody can recover an account.
 - [ ] Fill in `NEXT_PUBLIC_OPERATOR_NAME`, `NEXT_PUBLIC_CONTACT_EMAIL` and
       `NEXT_PUBLIC_GOVERNING_LAW`, and **read `/privacy` and `/terms` end to end**.
       They are a working draft written to match what the app actually does — they
@@ -48,11 +54,9 @@ What's already done, and what's still on you before BudgetLock is a public web a
 
 ### Strongly recommended
 
-- [ ] **Password reset.** There is currently no way for a user who forgets their
-      password to get back in — you'd have to reset it manually. This needs an
-      email sender (Resend, Postmark, SES) and a token table. It is the single
-      biggest functional gap for a public launch.
-- [ ] **Email verification** on signup, for the same reason.
+- [x] **Password reset** and **email verification** are built. They need email
+      configured to reach anyone: set `RESEND_API_KEY` and `MAIL_FROM`. Until
+      you do, links are written to the server log and `/api/health` says so.
 - [ ] **Error monitoring** (Sentry or similar). Right now failures only reach the
       platform logs, so you learn about them by looking.
 - [ ] **Uptime monitoring** hitting `/api/health` every few minutes.

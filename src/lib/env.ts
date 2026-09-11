@@ -53,6 +53,11 @@ export function resolveConfig(source: Source = process.env) {
     /** Secret backing Plaid access-token encryption. */
     authSecret: read("AUTH_SECRET"),
 
+    /** Resend API key. Blank disables outbound email (links go to the log). */
+    resendApiKey: read("RESEND_API_KEY"),
+    /** Verified sender, e.g. "BudgetLock <noreply@budgetlock.app>". */
+    mailFrom: read("MAIL_FROM"),
+
     plaidClientId: read("PLAID_CLIENT_ID"),
     plaidSecret: read("PLAID_SECRET"),
     plaidEnv: read("PLAID_ENV") || "sandbox",
@@ -125,6 +130,22 @@ export function validateEnv(cfg: Config = env): Issue[] {
       name: "PLAID_CLIENT_ID / PLAID_SECRET",
       severity: "warn",
       problem: "set both or neither — one without the other silently disables the real Plaid path",
+    });
+  }
+
+  // Email is what makes account recovery work. Missing it is serious enough to
+  // report on every boot, but the app serves fine without it.
+  if (Boolean(cfg.resendApiKey) !== Boolean(cfg.mailFrom)) {
+    issues.push({
+      name: "RESEND_API_KEY / MAIL_FROM",
+      severity: "warn",
+      problem: "set both or neither — one without the other leaves email disabled",
+    });
+  } else if (!cfg.resendApiKey) {
+    issues.push({
+      name: "RESEND_API_KEY / MAIL_FROM",
+      severity: "warn",
+      problem: "not set — password reset and email verification links are written to the log instead of sent",
     });
   }
 

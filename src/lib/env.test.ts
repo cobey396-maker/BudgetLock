@@ -5,63 +5,93 @@ import { isFatal, resolveConfig, validateEnv } from "./env";
 const DB = "postgresql://user:pw@host:5432/db";
 const SECRET = "0".repeat(64);
 
-const check = (source: Record<string, string | undefined>) => {
-  const issues = validateEnv(resolveConfig({ NODE_ENV: "production", ...source }));
+/**
+ * A fully configured production environment. Tests start from this and remove
+ * or corrupt one variable, so adding a new check to validateEnv extends `base`
+ * rather than breaking every assertion.
+ */
+const base = {
+  NODE_ENV: "production",
+  POSTGRES_PRISMA_URL: DB,
+  POSTGRES_URL_NON_POOLING: DB,
+  AUTH_SECRET: SECRET,
+  RESEND_API_KEY: "re_test_key",
+  MAIL_FROM: "BudgetLock <noreply@budgetlock.test>",
+};
+
+const check = (overrides: Record<string, string | undefined> = {}) => {
+  const issues = validateEnv(resolveConfig({ ...base, ...overrides }));
   return {
     fatal: issues.filter(isFatal).map((i) => i.name),
     warnings: issues.filter((i) => !isFatal(i)).map((i) => i.name),
   };
 };
 
-const healthy = { POSTGRES_PRISMA_URL: DB, POSTGRES_URL_NON_POOLING: DB, AUTH_SECRET: SECRET };
-
 describe("validateEnv severity", () => {
   test("a fully configured environment reports nothing", () => {
-    assert.deepEqual(check(healthy), { fatal: [], warnings: [] });
+    assert.deepEqual(check(), { fatal: [], warnings: [] });
   });
 
   // The regression this file exists for: a half-configured optional
   // integration must never be able to stop the server. It previously took
   // production down, /api/health included, so the cause was invisible.
   test("a half-set Plaid pair warns and is never fatal", () => {
-    const r = check({ ...healthy, PLAID_CLIENT_ID: "abc" });
+    const r = check({ PLAID_CLIENT_ID: "abc" });
     assert.deepEqual(r.fatal, []);
     assert.deepEqual(r.warnings, ["PLAID_CLIENT_ID / PLAID_SECRET"]);
   });
 
   test("an unknown PLAID_ENV warns and is never fatal", () => {
-    const r = check({ ...healthy, PLAID_ENV: "staging" });
+    const r = check({ PLAID_ENV: "staging" });
     assert.deepEqual(r.fatal, []);
     assert.deepEqual(r.warnings, ["PLAID_ENV"]);
   });
 
   test("a missing AUTH_SECRET warns and is never fatal", () => {
-    const r = check({ POSTGRES_PRISMA_URL: DB, POSTGRES_URL_NON_POOLING: DB });
+    const r = check({ AUTH_SECRET: undefined });
     assert.deepEqual(r.fatal, []);
     assert.deepEqual(r.warnings, ["AUTH_SECRET"]);
   });
 
   test("a short AUTH_SECRET warns and is never fatal", () => {
-    const r = check({ ...healthy, AUTH_SECRET: "tooshort" });
+    const r = check({ AUTH_SECRET: "tooshort" });
     assert.deepEqual(r.fatal, []);
     assert.deepEqual(r.warnings, ["AUTH_SECRET"]);
   });
 
   test("a missing migration URL warns — only the build needs it", () => {
-    const r = check({ POSTGRES_PRISMA_URL: DB, AUTH_SECRET: SECRET });
+    const r = check({ POSTGRES_URL_NON_POOLING: undefined });
     assert.deepEqual(r.fatal, []);
     assert.deepEqual(r.warnings, ["POSTGRES_URL_NON_POOLING"]);
   });
 
+  test("unconfigured email warns — recovery breaks, the app does not", () => {
+    const r = check({ RESEND_API_KEY: undefined, MAIL_FROM: undefined });
+    assert.deepEqual(r.fatal, []);
+    assert.deepEqual(r.warnings, ["RESEND_API_KEY / MAIL_FROM"]);
+  });
+
+  test("a half-set mail pair warns and is never fatal", () => {
+    const r = check({ MAIL_FROM: undefined });
+    assert.deepEqual(r.fatal, []);
+    assert.deepEqual(r.warnings, ["RESEND_API_KEY / MAIL_FROM"]);
+  });
+
   test("only a missing database URL is fatal", () => {
-    const r = check({ AUTH_SECRET: SECRET, POSTGRES_URL_NON_POOLING: DB });
+    const r = check({ POSTGRES_PRISMA_URL: undefined });
     assert.deepEqual(r.fatal, ["POSTGRES_PRISMA_URL"]);
   });
 
   test("several warnings at once still do not become fatal", () => {
-    const r = check({ POSTGRES_PRISMA_URL: DB, PLAID_SECRET: "s", PLAID_ENV: "nope" });
+    const r = check({
+      POSTGRES_URL_NON_POOLING: undefined,
+      PLAID_SECRET: "s",
+      PLAID_ENV: "nope",
+      RESEND_API_KEY: undefined,
+      MAIL_FROM: undefined,
+    });
     assert.deepEqual(r.fatal, []);
-    assert.ok(r.warnings.length >= 3, `expected several warnings, got ${r.warnings.join(", ")}`);
+    assert.ok(r.warnings.length >= 4, `expected several warnings, got ${r.warnings.join(", ")}`);
   });
 });
 

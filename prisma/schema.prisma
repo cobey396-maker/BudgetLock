@@ -13,13 +13,15 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  name         String
-  passwordHash String
-  createdAt    DateTime @default(now())
+  id              String    @id @default(cuid())
+  email           String    @unique
+  name            String
+  passwordHash    String
+  emailVerifiedAt DateTime?
+  createdAt       DateTime  @default(now())
 
   sessions     Session[]
+  authTokens   AuthToken[]
   profile      Profile?
   budget       Budget?
   items        PlaidItem[]
@@ -111,5 +113,23 @@ model RateLimit {
   count     Int      @default(0)
   expiresAt DateTime
 
+  @@index([expiresAt])
+}
+
+// Single-use, expiring tokens for password reset and email verification.
+// Only the SHA-256 digest is stored: the raw token exists solely in the link
+// that was emailed, so a database leak cannot be used to reset anyone's
+// password.
+model AuthToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purpose   String // 'password_reset' | 'email_verification'
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, purpose])
   @@index([expiresAt])
 }

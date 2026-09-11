@@ -64,6 +64,7 @@ See **[DEPLOY.md](DEPLOY.md)** for the Vercel walkthrough and
 | `POSTGRES_PRISMA_URL` | yes | pooled Postgres connection used at runtime |
 | `POSTGRES_URL_NON_POOLING` | yes | direct connection used for migrations |
 | `AUTH_SECRET` | yes | session secret + key for encrypting Plaid tokens (`openssl rand -hex 32`) |
+| `RESEND_API_KEY` / `MAIL_FROM` | for recovery | Resend credentials — blank writes reset links to the log instead of sending them |
 | `PLAID_CLIENT_ID` / `PLAID_SECRET` | no | Plaid credentials — blank uses the mock importer |
 | `PLAID_ENV` | no | `sandbox` (default) or `production` |
 | `NEXT_PUBLIC_APP_URL` | no | canonical origin for metadata/sitemap; inferred on Vercel |
@@ -88,8 +89,12 @@ integration can never cause an outage.
   - `env.ts` — typed environment access and startup validation.
   - `crypto.ts` — AES-256-GCM encryption for stored Plaid access tokens.
   - `rateLimit.ts` — Postgres-backed fixed-window rate limiting.
+  - `authTokens.ts` — single-use, expiring tokens behind reset/confirmation links.
+  - `mail.ts` — transactional email (Resend over REST) plus the two templates.
   - `auth.ts`, `db.ts`, `plaid.ts`, `plaidSync.ts`, `http.ts`, `client.ts`.
-- `src/app/api/` — auth, account, profile, budget, transactions, plaid, health, demo/reset.
+- `src/app/api/` — auth (incl. forgot/reset/verify), account, profile, budget,
+  transactions, plaid, health, demo/reset.
+- `src/app/reset`, `src/app/verify` — the pages reached from an emailed link.
 - `src/app/privacy`, `src/app/terms` — legal pages (see the warning in `src/lib/legal.ts`).
 - `src/components/` — one client state machine (`App.tsx`) mirroring the app's
   phases (account → questionnaire → onboarding → main app) plus screens and overlays.
@@ -104,7 +109,12 @@ user exactly where they left off.
 - Sessions: 32 random bytes, stored as a SHA-256 digest so a database leak cannot
   be replayed; `__Host-` prefixed, `HttpOnly`, `SameSite=Lax`, 30-day expiry.
 - Plaid access tokens: AES-256-GCM at rest, key derived from `AUTH_SECRET` by HKDF.
-- Rate limits: per-account and per-IP on login, per-IP on signup, per-user on
+- Account recovery: reset links are 32 random bytes, stored as a SHA-256 digest,
+  single-use, and valid for 60 minutes; issuing a new one invalidates the last.
+  Completing a reset destroys every existing session, so it evicts anyone who
+  already had access. Requesting a link never reveals whether an account exists.
+- Rate limits: per-account and per-IP on login, per-IP on signup, per-address on
+  reset/confirmation emails (so a mailbox cannot be flooded), per-user on
   writes and Plaid calls — enforced in Postgres so they hold across serverless
   instances.
 - Login does a constant-time-equivalent comparison against a dummy hash for

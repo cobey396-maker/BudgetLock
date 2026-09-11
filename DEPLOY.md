@@ -46,6 +46,8 @@ Project → **Settings → Environment Variables** → add for Production + Prev
 | `NEXT_PUBLIC_OPERATOR_NAME` | before launch | the name on your legal pages |
 | `NEXT_PUBLIC_CONTACT_EMAIL` | before launch | a real address you monitor |
 | `NEXT_PUBLIC_GOVERNING_LAW` | before launch | e.g. `the State of California, United States` |
+| `RESEND_API_KEY` | for recovery | a Resend API key — without it, password reset links go to the log, not to users |
+| `MAIL_FROM` | for recovery | a verified sender, e.g. `BudgetLock <noreply@yourdomain>` |
 | `PLAID_CLIENT_ID` | no | omit to use the mock importer |
 | `PLAID_SECRET` | no | the secret matching `PLAID_ENV` |
 | `PLAID_ENV` | no | `sandbox` (default) or `production` |

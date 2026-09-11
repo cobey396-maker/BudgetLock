@@ -17,6 +17,16 @@ export const api = {
   signup: (b: { name: string; email: string; password: string }) => call("/api/auth/signup", "POST", b),
   login: (b: { email: string; password: string }) => call("/api/auth/login", "POST", b),
   logout: () => call<{ ok: boolean }>("/api/auth/logout", "POST"),
+  forgotPassword: (email: string) =>
+    call<{ ok: boolean; message: string; emailConfigured: boolean }>("/api/auth/forgot", "POST", { email }),
+  resetPassword: (b: { token: string; password: string }) => call("/api/auth/reset", "POST", b),
+  verifyEmail: (token: string) =>
+    call<{ ok: boolean; alreadyVerified: boolean }>("/api/auth/verify", "POST", { token }),
+  resendVerification: () =>
+    call<{ ok: boolean; delivered?: boolean; alreadyVerified?: boolean; emailConfigured: boolean }>(
+      "/api/auth/verify/resend",
+      "POST"
+    ),
   profile: (b: unknown) => call("/api/profile", "PUT", b),
   budget: (b: unknown) => call("/api/budget", "PUT", b),
   addManual: (b: { amount: number; categoryId: string; note: string }) =>
